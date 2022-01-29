@@ -194,24 +194,24 @@ create view [dbo].[V_ReconSummary] as
     		     select EstFTE,FK_TransactionType, FK_Employee,FiscalYear,NULL as Region,null as SSL from dbo.F_Retirement where FiscalYear =(select FiscalYear+1 from get_Curr_FYear(getDate())) and datepart(Month,EstimatedDate) in(7,8,9)
     		    Union All
     		     select EstFTE,FK_TransactionType, FK_Employee,FiscalYear,NULL as Region,null as SSL from dbo.F_Separation where FiscalYear =(select FiscalYear+1 from get_Curr_FYear(getDate())) and datepart(Month,EstimatedDate) in(7,8,9)
-			    Union All
-			     select EstFTE,FK_TransactionType, FK_Employee,FiscalYear,Region,SSL from [dbo].[D_TBD] where FiscalYear =(select FiscalYear+1 from get_Curr_FYear(getDate())) and datepart(Month,EstimatedDate) in(7,8,9)) AS a
+		    Union All
+		     select EstFTE,FK_TransactionType, FK_Employee,FiscalYear,Region,SSL from [dbo].[D_TBD] where FiscalYear =(select FiscalYear+1 from get_Curr_FYear(getDate())) and datepart(Month,EstimatedDate) in(7,8,9)) AS a
     	     inner join dbo.D_TransactionType t on t.TransactionID = a.FK_TransactionType) as b
        left join (select EmployeeID,SSL,Region,Sector_der from dbo.D_Employee where rank = 'Partner/Principal')as e on e.EmployeeID = b.FK_Employee
 
     	 ), pv1 as
         (
-         select TransactionID,TransactionType,SSL,Sector,FiscalYear,[East],[West],[Expats],[Central],[PPG],[FSO],[FAAS],[Forensics],[EYIS],[Nat'l Assurance Other/Leadership]
+         select TransactionID,TransactionType,SSL,Sector,FiscalYear,[East],[West],[Expats],[Central]
          from   tab1 
-         PIVOT  (SUM(Headcount) FOR Region IN ([East],[West],[Expats],[Central],[PPG],[FSO],[FAAS],[Forensics],[EYIS],[Nat'l Assurance Other/Leadership])) AS p1
+         PIVOT  (SUM(Headcount) FOR Region IN ([East],[West],[Expats],[Central])) AS p1
         ), pv2 as
        (
-        select TransactionID,TransactionType,SSL,Sector,FiscalYear,[East],[West],[Expats],[Central],[PPG],[FSO],[FAAS],[Forensics],[EYIS],[Nat'l Assurance Other/Leadership]
+        select TransactionID,TransactionType,SSL,Sector,FiscalYear,[East],[West],[Expats],[Central]
         from   tab1 
-        PIVOT  (SUM(FTE) FOR Region IN ([East],[West],[Expats],[Central],[PPG],[FSO],[FAAS],[Forensics],[EYIS],[Nat'l Assurance Other/Leadership])) AS p2
+        PIVOT  (SUM(FTE) FOR Region IN ([East],[West],[Expats],[Central])) AS p2
        )
-        select a.TransactionID,a.TransactionType,a.SSL,a.Sector,a.FiscalYear,[Headcount East],[Headcount West],[Headcount Expats],[Headcount Central],[Headcount PPG],[Headcount FSO],[Headcount FAAS],[Headcount Forensics],[Headcount EYIS],[Headcount Nat'l Assurance Other/Leadership]
-             ,[FTE East],[FTE West],[FTE Expats],[FTE Central],[FTE PPG],[FTE FSO],[FTE FAAS],[FTE Forensics], [FTE EYIS],[FTE Nat'l Assurance Other/Leadership]
+        select a.TransactionID,a.TransactionType,a.SSL,a.Sector,a.FiscalYear,[Headcount East],[Headcount West],[Headcount Expats],[Headcount Central]
+             ,[FTE East],[FTE West],[FTE Expats],[FTE Central]
         from 
        (select TransactionID
 	          ,pv1.TransactionType
@@ -222,13 +222,7 @@ create view [dbo].[V_ReconSummary] as
     		   ,[Headcount West]    = sum(pv1.[West])
     		   ,[Headcount Expats]  = sum(pv1.[Expats])
     		   ,[Headcount Central] = sum(pv1.[Central])
-    		   ,[Headcount PPG]     = sum(pv1.[PPG])
-    		   ,[Headcount FSO]     = sum(pv1.[FSO])
-			   ,[Headcount FAAS]    = sum(pv1.[FAAS])
-			   ,[Headcount Forensics] = sum(pv1.[Forensics])
-			   ,[Headcount EYIS]    = sum(pv1.[EYIS])
-			   ,[Headcount Nat'l Assurance Other/Leadership] = sum(pv1.[Nat'l Assurance Other/Leadership])
-    	from pv1 
+      	from pv1 
     	group by pv1.TransactionID,pv1.TransactionType
                ,pv1.SSL,Sector,FiscalYear
     	) a
@@ -239,14 +233,8 @@ create view [dbo].[V_ReconSummary] as
     		[FTE East]       = sum(pv2.[East]),
     		[FTE West]       = sum(pv2.[West]),
     		[FTE Expats]     = sum(pv2.[Expats]),
-    		[FTE Central]    = sum(pv2.[Central]),
-    		[FTE PPG]        = sum(pv2.[PPG]),
-    		[FTE FSO]        = sum(pv2.[FSO]),
-			[FTE FAAS]       = sum(pv2.[FAAS]),
-			[FTE Forensics]  = sum(pv2.[Forensics]),
-			[FTE EYIS]       = sum(pv2.[EYIS]),
-			[FTE Nat'l Assurance Other/Leadership] = sum(pv2.[Nat'l Assurance Other/Leadership])
-    	from pv2 
+    		[FTE Central]    = sum(pv2.[Central])
+       	from pv2 
     	group by pv2.TransactionID,pv2.TransactionType
                 ,pv2.SSL,Sector,FiscalYear) b
     	where a.TransactionID =b.TransactionID
